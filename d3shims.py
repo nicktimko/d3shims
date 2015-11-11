@@ -92,7 +92,7 @@ template = env.from_string('''
 </div>
 '''.strip())
 
-def force(G, size=(600, 400)):
+def nx_force(G, size=(600, 400)):
     """
     Provided a NetworkX graph, render it in JS using D3js.
     """

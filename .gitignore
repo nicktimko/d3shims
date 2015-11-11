@@ -1,3 +1,7 @@
 __pycache__/
 .ipynb_checkpoints
 .py[cod]
+
+build/
+dist/
+*.egg-info/
