@@ -11,7 +11,7 @@ with open(path.join(here, 'README.rst'), encoding='utf-8') as f:
 
 setup(
     name='d3shims',
-    version='0.1.1-dev',
+    version='0.1.1',
 
     description='Shim functions to generate D3 plots',
     long_description=long_description,

@@ -23,6 +23,13 @@ _TEMPLATE = _ENV.from_string('''
       stroke: #999;
       stroke-opacity: .6;
     }
+
+    .node text {
+      pointer-events: none;
+      font: 10px sans-serif;
+      color: #000;
+      stroke-width: 0;
+    }
 </style>
 <script>
 +function() {
@@ -31,6 +38,7 @@ _TEMPLATE = _ENV.from_string('''
         'data': {{ data }},
         'width': {{ width }},
         'height': {{ height }},
+        'linkdistance': {{ linkdistance }}
     }
 
     if (window.d3 === undefined) {
@@ -52,7 +60,7 @@ _TEMPLATE = _ENV.from_string('''
 
         var force = d3.layout.force()
             .charge(-120)
-            .linkDistance(30)
+            .linkDistance(o.linkdistance)
             .size([o.width, o.height])
             .nodes(o.data.nodes)
             .links(o.data.links)
@@ -66,14 +74,18 @@ _TEMPLATE = _ENV.from_string('''
 
         var node = svg.selectAll(".node")
                 .data(o.data.nodes)
-            .enter().append("circle")
+            .enter().append("g")
                 .attr("class", "node")
-                .attr("r", 5)
-                .style("fill", function(d) { return color(d.group); })
-                .call(force.drag);
+                .call(force.drag)
 
-        node.append("title")
-            .text(function(d) { return d.name; });
+        node.append("circle")
+            .attr("r", 5)
+            .style("fill", function(d) { return color(d.group); });
+
+        /*node.append("title")
+            .text(function(d) { return d.name; });*/
+
+        {{ insert_a }}
 
         force.on("tick", function() {
             link.attr("x1", function(d) { return d.source.x; })
@@ -81,8 +93,7 @@ _TEMPLATE = _ENV.from_string('''
                 .attr("x2", function(d) { return d.target.x; })
                 .attr("y2", function(d) { return d.target.y; });
 
-            node.attr("cx", function(d) { return d.x; })
-                .attr("cy", function(d) { return d.y; });
+            node.attr("transform", function(d) { return "translate(" + d.x + "," + d.y + ")"; });
         });
     }
 }();
@@ -91,9 +102,22 @@ _TEMPLATE = _ENV.from_string('''
 </div>
 '''.strip())
 
-def nx_force(G, size=(600, 400)):
+_LABEL_INSERTS = {
+    None: '',
+    'always': '''
+        node.append("text")
+            .attr("dx", 12)
+            .attr("dy", ".35em")
+            .text(function(d) { return d.name; });
+        ''',
+}
+
+def nx_force(G, size=(600, 400), labels=None, linkdistance=30):
     """
     Provided a NetworkX graph, render it in JS using D3js.
+
+    *size* is a 2-ple with the width and height in pixels. *labels* can be
+    ``None``, ``'always'``. *linkdistance* is the relaxed link distance.
     """
     data = {
         'nodes': [],
@@ -118,5 +142,7 @@ def nx_force(G, size=(600, 400)):
             height=size[1],
             divid='x' + uuid.uuid4().hex,
             data=json.dumps(data),
+            insert_a=_LABEL_INSERTS[labels],
+            linkdistance=linkdistance
         )
     return HTML(html)
