@@ -2,13 +2,16 @@
 # Copyright (c) Nick Timkovich 2015
 # MIT Licensed
 from __future__ import absolute_import, division, print_function
-import uuid
+import random
 import json
 
 from IPython.display import HTML
 import jinja2
 
 __all__ = ['nx_force']
+
+_LETTERS = 'bcdghjklmnpqrtvwyz'
+_CHARS = _LETTERS + '346789'
 
 _ENV = jinja2.Environment()
 
@@ -70,7 +73,9 @@ _TEMPLATE = _ENV.from_string('''
                 .data(o.data.links)
             .enter().append("line")
                 .attr("class", "link")
-                .style("stroke-width", function(d) { return Math.sqrt(d.value); });
+                .style("stroke-width", function(d) {
+                    return Math.sqrt(d.value);
+                });
 
         var node = svg.selectAll(".node")
                 .data(o.data.nodes)
@@ -93,7 +98,9 @@ _TEMPLATE = _ENV.from_string('''
                 .attr("x2", function(d) { return d.target.x; })
                 .attr("y2", function(d) { return d.target.y; });
 
-            node.attr("transform", function(d) { return "translate(" + d.x + "," + d.y + ")"; });
+            node.attr("transform", function(d) {
+                return "translate(" + d.x + "," + d.y + ")";
+            });
         });
     }
 }();
@@ -112,6 +119,12 @@ _LABEL_INSERTS = {
         ''',
 }
 
+
+def _rand_id(len=8):
+    return (random.choice(_LETTERS)
+            + ''.join(random.choice(_CHARS) for _ in range(len - 1)))
+
+
 def nx_force(G, size=(600, 400), labels=None, linkdistance=30):
     """
     Provided a NetworkX graph, render it in JS using D3js.
@@ -127,22 +140,25 @@ def nx_force(G, size=(600, 400), labels=None, linkdistance=30):
     for i, (node, ndata) in enumerate(G.nodes_iter(data=True)):
         node_index_map[node] = i
         data['nodes'].append({
-                'name': str(node),
-                'group': ndata.get('group', 0)
-            })
+            'name': str(node),
+            'group': ndata.get('group', 0),
+        })
     for u, v, edata in G.edges_iter(data=True):
         data['links'].append({
-                'source': node_index_map[u],
-                'target': node_index_map[v],
-                'value': edata.get('weight', 1)
-            })
+            'source': node_index_map[u],
+            'target': node_index_map[v],
+            'value': edata.get('weight', 1),
+        })
 
+    divid = 'd3shim-' + _rand_id()
     html = _TEMPLATE.render(
-            width=size[0],
-            height=size[1],
-            divid='x' + uuid.uuid4().hex,
-            data=json.dumps(data),
-            insert_a=_LABEL_INSERTS[labels],
-            linkdistance=linkdistance
-        )
+        width=size[0],
+        height=size[1],
+        divid=divid,
+        data=json.dumps(data),
+        insert_a=_LABEL_INSERTS[labels],
+        linkdistance=linkdistance,
+    )
+    # display(HTML(html))
+    # return divid
     return HTML(html)
