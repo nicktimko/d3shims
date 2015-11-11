@@ -6,10 +6,9 @@ import uuid
 import json
 
 from IPython.display import HTML
-import networkx as nx
 import jinja2
 
-__all__ = ['force']
+__all__ = ['nx_force']
 
 env = jinja2.Environment()
 
