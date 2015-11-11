@@ -10,9 +10,9 @@ import jinja2
 
 __all__ = ['nx_force']
 
-env = jinja2.Environment()
+_ENV = jinja2.Environment()
 
-template = env.from_string('''
+_TEMPLATE = _ENV.from_string('''
 <style>
     .node {
       stroke: #fff;
@@ -113,7 +113,7 @@ def nx_force(G, size=(600, 400)):
                 'value': edata.get('weight', 1)
             })
 
-    html = template.render(
+    html = _TEMPLATE.render(
             width=size[0],
             height=size[1],
             divid='x' + uuid.uuid4().hex,
